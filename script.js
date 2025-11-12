@@ -39,4 +39,43 @@ document.addEventListener("DOMContentLoaded", function () {
   const validIds = Array.from(sections).map((s) => s.id);
   const initialSection = validIds.includes(initialHash) ? initialHash : "intro";
   activateSection(initialSection);
+
+  // --- Edit mode functionality ---
+
+  const editToggle = document.getElementById("edit-toggle");
+
+  if (editToggle) {
+    const editableSelectors = [
+      ".section-header h1",
+      ".section-header h2",
+      ".section-header .section-lead",
+      ".block p",
+      ".block li",
+      ".card p",
+      ".bullet-list li",
+      ".figure-card figcaption",
+      ".table-wrapper caption",
+      ".table-wrapper th",
+      ".table-wrapper td",
+      ".site-footer p"
+    ].join(", ");
+
+    function setEditing(on) {
+      document.documentElement.classList.toggle("is-editing", on);
+      editToggle.setAttribute("aria-pressed", on ? "true" : "false");
+
+      const editableNodes = document.querySelectorAll(editableSelectors);
+      editableNodes.forEach((el) => {
+        el.setAttribute("contenteditable", on ? "true" : "false");
+        el.classList.toggle("editable", on);
+      });
+    }
+
+    let isEditing = false;
+
+    editToggle.addEventListener("click", () => {
+      isEditing = !isEditing;
+      setEditing(isEditing);
+    });
+  }
 });
