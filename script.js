@@ -22,14 +22,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
       activateSection(target);
 
-      // Update URL hash without jumping around
       if (history.replaceState) {
         history.replaceState(null, "", "#" + target);
       } else {
         window.location.hash = target;
       }
 
-      // Scroll to top for better continuity
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   });
@@ -40,12 +38,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const initialSection = validIds.includes(initialHash) ? initialHash : "intro";
   activateSection(initialSection);
 
-  // --- Edit mode functionality: make ALL visible text editable ---
+  // --- Edit mode functionality (all text) ---
 
   const editToggle = document.getElementById("edit-toggle");
 
   if (editToggle) {
-    // Tags that typically contain text we want to be editable
     const editableTags = [
       "H1",
       "H2",
@@ -77,14 +74,11 @@ document.addEventListener("DOMContentLoaded", function () {
       for (let i = 0; i < all.length; i++) {
         const el = all[i];
 
-        // Only consider elements whose tag is in our whitelist
         if (!editableTags.includes(el.tagName)) continue;
 
-        // Skip elements that are hidden
         const style = window.getComputedStyle(el);
         if (style.display === "none" || style.visibility === "hidden") continue;
 
-        // Skip elements that don't actually contain text
         const text = el.textContent.trim();
         if (!text) continue;
 
@@ -110,6 +104,79 @@ document.addEventListener("DOMContentLoaded", function () {
     editToggle.addEventListener("click", () => {
       isEditing = !isEditing;
       setEditing(isEditing);
+    });
+  }
+
+  // --- Image lightbox (fullscreen on click) ---
+
+  const lightbox = document.getElementById("image-lightbox");
+  const lightboxImg = lightbox ? lightbox.querySelector(".image-lightbox__img") : null;
+  const lightboxCaption = lightbox ? lightbox.querySelector(".image-lightbox__caption") : null;
+  const lightboxClose = lightbox ? lightbox.querySelector(".image-lightbox__close") : null;
+
+  function openLightbox(img) {
+    if (!lightbox || !lightboxImg) return;
+
+    const src = img.getAttribute("src");
+    const alt = img.getAttribute("alt") || "";
+
+    lightboxImg.src = src;
+    lightboxImg.alt = alt;
+
+    if (lightboxCaption) {
+      const fig = img.closest("figure");
+      const cap = fig ? fig.querySelector("figcaption") : null;
+      const captionText = cap ? cap.textContent.trim() : alt;
+      lightboxCaption.textContent = captionText;
+      lightboxCaption.style.display = captionText ? "block" : "none";
+    }
+
+    lightbox.classList.add("is-open");
+    lightbox.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    if (!lightbox || !lightboxImg) return;
+    lightbox.classList.remove("is-open");
+    lightbox.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    lightboxImg.src = "";
+    lightboxImg.alt = "";
+  }
+
+  if (lightbox) {
+    // Open on click – all images inside .figure-card
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      if (target.matches(".figure-card img")) {
+        // Don’t open while in text-edit mode
+        if (document.documentElement.classList.contains("is-editing")) return;
+
+        event.preventDefault();
+        openLightbox(target);
+      }
+    });
+
+    // Close when clicking dark background
+    lightbox.addEventListener("click", (event) => {
+      if (event.target === lightbox) {
+        closeLightbox();
+      }
+    });
+
+    // Close with button
+    if (lightboxClose) {
+      lightboxClose.addEventListener("click", closeLightbox);
+    }
+
+    // Close with Esc
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && lightbox.classList.contains("is-open")) {
+        closeLightbox();
+      }
     });
   }
 });
